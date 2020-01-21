@@ -26,9 +26,8 @@
 
 ## 1.1. Load Necessary Libraries and Scripts
 ### load libraries and functions
-if(!require(optparse, quietly=T)){install.packages('optparse',repos="http://cran.us.r-project.org"); require(optparse, quietly=T);}
-if(!require(mvtnorm, quietly=T)){install.packages('mvtnorm',repos="http://cran.us.r-project.org"); require(mvtnorm, quietly=T);}
-suppressMessages(library(ggplot2))
+suppressMessages(library(optparse))
+suppressMessages(library(mvtnorm))
 suppressMessages(library(reshape2))
 suppressMessages(library(dplyr))
 suppressMessages(library(glmnet))
@@ -38,8 +37,7 @@ suppressMessages(library(foreach))
 suppressMessages(library(doParallel))
 if(!is.loaded("wrapper")){
   #system("R CMD SHLIB optim.c")
-  dyn.load("~/group/datasets/UTMOST/CTIMP/optim.so")
-  #dyn.load("optim.so")
+  dyn.load("optim.so")
 }
 source("twas_simulation_util.R")
 
@@ -55,9 +53,9 @@ opt_list <- list(
   make_option("--genes", type="integer", default=100, help="Number of genes in a round of simulation (default = %default)"),
   make_option("--expr-tis", type="integer", default=1, help="Number of gene expressing tissues (default = %default)"),
   make_option("--total-tis", type="integer", default=10, help="Number of total tissues (default = %default)"),
-  make_option("--h2-ge", type="numeric", default=0.3, help="Heritability of eQTLs and gene expression levels, (default = %default)"),
-  make_option("--cor-tissues", type="character", default="0", help="Correlation among tissues, like '0' or '-1,1' (default = %default)"),
-  make_option("--r2-et", type="numeric", default=0.01, help="Heritability between gene expression levels and trait, (default = %default)"),
+  make_option("--h2-ge", type="numeric", default=0.3, help="Heritability of gene expression levels, (default = %default)"),
+  make_option("--cor-tissues", type="character", default="0", help="Correlation of gene expression levels among tissues, like '0' or '-1,1' (default = %default)"),
+  make_option("--r2-et", type="numeric", default=0.01, help="Variance of simulated traits explained by gene expression levels, (default = %default)"),
   make_option("--output-dir", type="character", action="store", default=paste0(getwd(), "/simulated_data/"), help="Output directory of simulation results"),
   make_option("--output-prefix", type="character", action="store", default="twas_sim", help="Prefix of each output file"),
   make_option("--core", type="numeric", default=1, help="Number of cores to run parallel tasks (default = %default)"),
