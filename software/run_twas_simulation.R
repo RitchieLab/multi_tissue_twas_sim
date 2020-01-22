@@ -14,9 +14,8 @@
 ## 3. Entree/Main Course
 ## 3.1. Run single-tissue TWAS
 ## 3.2. Run integrative TWAS
-## 3.3. Evaluate Power and Type I Error Rate of TWAS Results
 ## 4. Dessert
-## 4.1. None. Sorry this is a healthy (aka anti-sweet) restaurant.
+## 4.1. None. Sorry this is a restaurant that does not serve desserts.
 ############################################
 
 
@@ -36,7 +35,7 @@ suppressMessages(library(GBJ))
 suppressMessages(library(foreach))
 suppressMessages(library(doParallel))
 if(!is.loaded("wrapper")){
-  #system("R CMD SHLIB optim.c")
+  system("R CMD SHLIB optim.c")
   dyn.load("optim.so")
 }
 source("twas_simulation_util.R")
@@ -59,7 +58,8 @@ opt_list <- list(
   make_option("--output-dir", type="character", action="store", default=paste0(getwd(), "/simulated_data/"), help="Output directory of simulation results"),
   make_option("--output-prefix", type="character", action="store", default="twas_sim", help="Prefix of each output file"),
   make_option("--core", type="numeric", default=1, help="Number of cores to run parallel tasks (default = %default)"),
-  make_option("--random-seed", type="numeric", default=1, help="Random seed number (default = %default)")
+  make_option("--random-seed", type="numeric", default=1, help="Random seed number (default = %default)"),
+  make_option("--simulation", action="store_true", default=FALSE, help="Only generate simulated genotype, gene expression, and phenotype datasets. Do not run eQTL detection and TWAS. (default = %default)")
 )
 opts <- parse_args(OptionParser(option_list=opt_list))
 # parse values
@@ -78,11 +78,11 @@ r2_et <- opts$`r2-et` #r2_et_list <- c(0.00001, 0.0005, 0.005, 0.01)
 # set random seed
 random_seed <- n_tissues*100 + opts$`random-seed`
 set.seed(random_seed, kind = "L'Ecuyer-CMRG")
-
+# output options
 output_dir <- opts$`output-dir`
 output_prefix <- opts$`output-prefix`
-dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
-setwd(output_dir)
+# simulation only
+sim_only <- opts$simulation
 
 numCores <- opts$core
 print(paste0("numCores=", numCores))
@@ -112,22 +112,18 @@ print(paste0("#tissues=",n_tissues,", pct_mt_eqtls=", pct_mt_eqtls, ", h2_gene_t
 
 ### 2.1.1. define paths and parameters
 # i.e. path = sample_size/tissue/snp_composition/heritability/
-sim_dataset_dir <- paste0("train", n_train, "_test", n_test, 
-                          "/tis", n_tissues,
-			  "/snps", n_snps, "_eqtls", n_eqtls, "_mteqtls", n_mt_eqtls, "_cor_tissues", cor_tissues,   
-                          "/h2_ge_", h2_ge, "_r2_et_", format(r2_et, scientific = FALSE),"/")
-dir.create(sim_dataset_dir, recursive = TRUE, showWarnings = FALSE)
-setwd(sim_dataset_dir)
+dir.create(output_dir, recursive = TRUE, showWarnings = TRUE)
+setwd(output_dir)
 
 ### set up dishes
 geno_dir <- "geno/"
-dir.create(geno_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(geno_dir, recursive = TRUE, showWarnings = TRUE)
 expr_dir <- "gene/"
-dir.create(expr_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(expr_dir, recursive = TRUE, showWarnings = TRUE)
 pheno_dir <- "pheno/"
-dir.create(pheno_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(pheno_dir, recursive = TRUE, showWarnings = TRUE)
 assoc_dir <- "twas_assoc/"
-dir.create(assoc_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(assoc_dir, recursive = TRUE, showWarnings = TRUE)
 
 # remove gene specificity annotation files if it exists from previous simulation
 file.remove(paste0(expr_dir, output_prefix, "gene_info.txt"))
@@ -143,8 +139,9 @@ twas_summary_glasso <- data.frame()
 gene_tsi <- data.frame()
 
 # parallel run n_genes permutations  
-twas_summary <- foreach(i=1:n_genes, .combine = 'rbind') %dopar% {
- 
+#twas_summary <- foreach(i=1:n_genes, .combine = 'rbind') %dopar% {
+twas_summary <- foreach(i=1:10, .combine = 'rbind') %dopar% {
+  
   ### 2.1.2. Genotypic data
   # simulate SNP info file
   snp_info <- simulate_geno(n_snps, n_eqtls, n_mt_eqtls, min_maf = maf_range[1], max_maf = maf_range[2])
@@ -184,90 +181,94 @@ twas_summary <- foreach(i=1:n_genes, .combine = 'rbind') %dopar% {
   trait_error <- rnorm(n_train + n_test)
   trait_error <- trait_error/sd(trait_error) * sqrt(1-r2_et)
   trait <- trait_signal + trait_error
-
-  
-  ## 2.2. eQTL Detection
-  ### Detecting eQTLs from test datasets with 1) elastic net (implemented in PrediXcan) and 2) sparse group lasso (implemented in UTMOST)#
-  geno_train <- geno[train_ind, ]
-  expr_train <- as.matrix(expr[train_ind, ])
-  n_folds <- 5
-  ### 2.2.1. elastic net (implemented in PrediXcan)
-  elnet_weights <- matrix()
-  elnet_weights <- detect_eqtls_elnet(geno_train, expr_train, n_folds)
-  colnames(elnet_weights) <- tissue_names
-  
-  ### 2.2.1. sparse group lasso (implemented in UTMOST)#
-  glasso_weights <- matrix()
-  glasso_weights <- detect_eqtls_glasso(geno_train, expr_train, n_folds)
-  colnames(glasso_weights) <- tissue_names
-  rownames(glasso_weights) <- snp_info$SNP
   
   
   ############################################
-  ## 3. Entree/Main Course
+  ## Only run the following codes if not only simulation
   ############################################
+  if(!sim_only){
+    ## 2.2. eQTL Detection
+    ### Detecting eQTLs from test datasets with 1) elastic net (implemented in PrediXcan) and 2) sparse group lasso (implemented in UTMOST)#
+    geno_train <- geno[train_ind, ]
+    expr_train <- as.matrix(expr[train_ind, ])
+    n_folds <- 5
+    ### 2.2.1. elastic net (implemented in PrediXcan)
+    elnet_weights <- matrix()
+    elnet_weights <- detect_eqtls_elnet(geno_train, expr_train, n_folds)
+    colnames(elnet_weights) <- tissue_names
   
-  ## 3.1. Run single-tissue TWAS
-  geno_test <- geno[test_ind,]
-  trait_test <- trait[test_ind]
+    ### 2.2.1. sparse group lasso (implemented in UTMOST)#
+    glasso_weights <- matrix()
+    glasso_weights <- detect_eqtls_glasso(geno_train, expr_train, n_folds)
+    colnames(glasso_weights) <- tissue_names
+    rownames(glasso_weights) <- snp_info$SNP
   
-  ### 3.1.1. Predict gene expression levels from estimated eQTL weights
-  elnet_pred_expr <- geno_test %*% elnet_weights
-  glasso_pred_expr <- geno_test %*% glasso_weights
   
-  ### 3.1.2. Run linear regression on trait and predicted gene expression levels
-  ### PrediXcan
-  assoc_tmp <- run_lm(trait_test, elnet_pred_expr)
-  elnet_tmp <- cbind(data.frame(method = "elnet", gene = rep(paste0("gene", i), n_tissues), trait = rep(paste0("trait_gene",i), n_tissues)), assoc_tmp)
-  ### UTMOST
-  assoc_tmp <- run_lm(trait_test, glasso_pred_expr)
-  glasso_tmp <- cbind(data.frame(method = "glasso", gene = rep(paste0("gene", i), n_tissues), trait = rep(paste0("trait_gene",i), n_tissues)), assoc_tmp)
-
-
-  ## 3.2. Run integrative TWAS
-  # run integrative when there are multiple gene expressing tissues
-
-  ### 3.2.1. Principal Component Regression
-  ### MulTiXcan = Elastic Net + Principal Component Regression
-  #### for principal component regression, response variable must be centered
-  #### selection of the number of principal components
-  assoc_tmp <- run_pcr(trait_test, elnet_pred_expr)
-  pcr_tmp <- cbind(data.frame(method = "elnet_pcr", gene = paste0("gene", i), trait = paste0("trait_gene",i)), assoc_tmp)
+    ############################################
+    ## 3. Entree/Main Course
+    ############################################
   
-  ### 3.2.2. GBJ test
-  ### UTMOST
-  #### extract the list of eQTLs
-  #### calculate covariance matrix of tissues with respect to a certain gene as indicated by the UTMOST paper
-  #### cov(tissues) = t(eqtl weights) * cov(genotypes) * eqtl weights
-  # assoc_tmp <- run_gbj(trait_test, glasso_pred_expr, geno, glasso_weights, use_snp_cov = TRUE)
-  assoc_tmp <- run_gbj(trait_test, glasso_pred_expr, use_snp_cov = FALSE)
-  gbj_tmp <- cbind(data.frame(method = "glasso_gbj", gene = paste0("gene", i), trait = paste0("trait_gene",i)), assoc_tmp)
+    ## 3.1. Run single-tissue TWAS
+    geno_test <- geno[test_ind,]
+    trait_test <- trait[test_ind]
+  
+    ### 3.1.1. Predict gene expression levels from estimated eQTL weights
+    elnet_pred_expr <- geno_test %*% elnet_weights
+    glasso_pred_expr <- geno_test %*% glasso_weights
+  
+    ### 3.1.2. Run linear regression on trait and predicted gene expression levels
+    ### PrediXcan
+    assoc_tmp <- run_lm(trait_test, elnet_pred_expr)
+    elnet_tmp <- cbind(data.frame(method = "elnet", gene = rep(paste0("gene", i), n_tissues), trait = rep(paste0("trait_gene",i), n_tissues)), assoc_tmp)
+    ### UTMOST
+    assoc_tmp <- run_lm(trait_test, glasso_pred_expr)
+    glasso_tmp <- cbind(data.frame(method = "glasso", gene = rep(paste0("gene", i), n_tissues), trait = rep(paste0("trait_gene",i), n_tissues)), assoc_tmp)
 
-  # combine all test results  
-  twas_summary <- rbind(elnet_tmp, glasso_tmp, pcr_tmp, gbj_tmp)
 
+    ## 3.2. Run integrative TWAS
+    # run integrative when there are multiple gene expressing tissues
+
+    ### 3.2.1. Principal Component Regression
+    ### MulTiXcan = Elastic Net + Principal Component Regression
+    #### for principal component regression, response variable must be centered
+    #### selection of the number of principal components
+    assoc_tmp <- run_pcr(trait_test, elnet_pred_expr)
+    pcr_tmp <- cbind(data.frame(method = "elnet_pcr", gene = paste0("gene", i), trait = paste0("trait_gene",i)), assoc_tmp)
+  
+    ### 3.2.2. GBJ test
+    ### UTMOST
+    #### extract the list of eQTLs
+    #### calculate covariance matrix of tissues with respect to a certain gene as indicated by the UTMOST paper
+    #### cov(tissues) = t(eqtl weights) * cov(genotypes) * eqtl weights
+    # assoc_tmp <- run_gbj(trait_test, glasso_pred_expr, geno, glasso_weights, use_snp_cov = TRUE)
+    assoc_tmp <- run_gbj(trait_test, glasso_pred_expr, use_snp_cov = FALSE)
+    gbj_tmp <- cbind(data.frame(method = "glasso_gbj", gene = paste0("gene", i), trait = paste0("trait_gene",i)), assoc_tmp)
+
+    # combine all test results  
+    twas_summary <- rbind(elnet_tmp, glasso_tmp, pcr_tmp, gbj_tmp)
+  }
   ############################################
   ## Sides
   ############################################
   # save genotypic data and snp info 
   # save info file
   write.table(snp_info, file = paste0(geno_dir,output_prefix, "snp_info_gene",i,".txt"), quote = FALSE, sep = "\t", col.names = TRUE, row.names = FALSE)
-  #write.table(geno[train_ind,], file = paste0(geno_dir, output_prefix, "geno_train_gene",i,".txt"), quote = FALSE, sep = " ", col.names = TRUE, row.names = FALSE)
-  #write.table(geno[test_ind], file = paste0(geno_dir, output_prefix, "geno_test_gene",i,".txt"), quote = FALSE, sep = " ", col.names = TRUE, row.names = FALSE)
-
+  write.table(geno[train_ind,], file = paste0(geno_dir, output_prefix, "geno_train_gene",i,".txt"), quote = FALSE, sep = " ", col.names = TRUE, row.names = FALSE)
+  write.table(geno[test_ind], file = paste0(geno_dir, output_prefix, "geno_test_gene",i,".txt"), quote = FALSE, sep = " ", col.names = TRUE, row.names = FALSE)
+  
   # save expression and real eQTL info 
-  #write.table(rbind(st_eqtl_weights, mt_eqtl_weights), file = paste0(true_eqtl_dir, output_prefix, "true_eqtl_gene",i,".txt"), quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
-  #write.table(expr[train_ind,], file = paste0(expr_dir, output_prefix, "expr_train_gene",i,".txt"), quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
-  #write.table(expr[test_ind,], file = paste0(expr_dir, output_prefix, "expr_test_gene",i,".txt"), quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
+  write.table(rbind(st_eqtl_weights, mt_eqtl_weights), file = paste0(geno_dir, output_prefix, "true_eqtl_gene",i,".txt"), quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
+  write.table(expr[train_ind,], file = paste0(expr_dir, output_prefix, "expr_train_gene",i,".txt"), quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
+  write.table(expr[test_ind,], file = paste0(expr_dir, output_prefix, "expr_test_gene",i,".txt"), quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
   
   # save trait info
   # complete trait info
-  #write.table(trait, file = paste0(pheno_dir, output_prefix, "trait_gene",i,".txt"), quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
-
+  write.table(trait, file = paste0(pheno_dir, output_prefix, "trait_gene",i,".txt"), quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
+  
   # save predicted eQTL info
   #write.table(elnet_weights, file = paste0(pred_eqtl_dir, output_prefix, "pred_eqtl_elnet_gene",i,".txt"), quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
   #write.table(glasso_weights, file = paste0(pred_eqtl_dir, output_prefix, "pred_eqtl_glasso_gene",i,".txt"), quote = FALSE, sep = "\t", col.names = TRUE, row.names = TRUE)
-
+  
   # save tissue specificity information
   if(file.exists(paste0(expr_dir, output_prefix, "gene_info.txt"))){
     write.table(gene_tsi, paste0(expr_dir, output_prefix, "gene_info.txt"), quote = F, sep = "\t", col.names = FALSE, row.names = FALSE, append = TRUE)
@@ -291,18 +292,16 @@ write.table(parameter_setup, paste0(output_prefix, "simulation_parameters.txt"),
 ############################################
 # save twas assocation results
 # sort association results before writing into files
-
-twas_method_list <- unique(twas_summary$method)
-for(twas_method in twas_method_list){
-  twas_results <- twas_summary[twas_summary$method == twas_method, ]
-  twas_results <- twas_results[order(twas_results$raw_p_value), ]
-  write.table(twas_results, paste0(assoc_dir, output_prefix, twas_method, "_twas_assoc.txt"), quote = F, sep = "\t", col.names = TRUE, row.names = FALSE)
+if(!sim_only){
+  twas_method_list <- unique(twas_summary$method)
+  for(twas_method in twas_method_list){
+    twas_results <- twas_summary[twas_summary$method == twas_method, ]
+    twas_results <- twas_results[order(twas_results$raw_p_value), ]
+    write.table(twas_results, paste0(assoc_dir, output_prefix, twas_method, "_twas_assoc.txt"), quote = F, sep = "\t", col.names = TRUE, row.names = FALSE)
+  }
 }
 
 
-## 3.3. Evaluate Power and/or Type I Error Rate of TWAS Results
-### probably in another script
-### for your own health, please consider taking small meals
 
 
 
