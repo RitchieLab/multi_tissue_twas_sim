@@ -4,18 +4,21 @@ Multi-tissue TWAS Simulation is an algorithm to simultaneously simulation genoty
 
 ## Prerequisites
 
-The software is developed using R language and tested in Mac and Unix OS, and implemented in high performance computing (HPC) center. There is no required version of R, but R (>=3.4.2) is perferred. 
+The software is developed using R language and tested in Mac and Unix OS, and implemented in high performance computing (HPC) center. There is no required version of R, but R (>=3.5.0) is perferred. 
 
-To run run_twas_simulation.R, the following libraries is required:
-* optparse
-* mvtnorm
-* reshape2
-* dplyr
-* glmnet
-* pls
-* GBJ
-* foreach
-* doParallel
+To run simulation using run_twas_simulation.R, the following libraries are required:
+* [optparse](https://cran.r-project.org/web/packages/optparse/index.html)
+* [mvtnorm](https://cran.r-project.org/web/packages/mvtnorm/index.html)
+* [reshape2](https://cran.r-project.org/web/packages/reshape2/index.html)
+* [dplyr](https://dplyr.tidyverse.org/articles/dplyr.html)
+* [foreach](https://cran.r-project.org/web/packages/foreach/index.html)
+* [doParallel](https://cran.r-project.org/web/packages/doParallel/index.html)
+
+The following packages are needed for eQTL detection and TWAS 
+* [glmnet](https://cran.r-project.org/web/packages/glmnet/index.html)
+* [pls](https://cran.r-project.org/web/packages/pls/index.html)
+* [GBJ](https://cran.r-project.org/web/packages/GBJ/index.html)
+
 
 ## Project Layout
 
@@ -25,8 +28,8 @@ The **software** folder contains the simulation and evaluation tools.
   * Automatically run several existing eQTL detecting methods and TWAS algorithms using the simulated datasets
 * twas_simulation_util.R
   * Amenities of Multi-tissue TWAS Simulation, expected to be under the same folder as run_twas_simulation.R by default
-* optim.so
-  * Amenity of Multi-tissue TWAS Simulation, expected to be under the same folder as run_twas_simulation.R by default
+* optim.*
+  * Amenity of eQTL detection using the group LASSO algorithm. Expected to be under the same folder as run_twas_simulation.R by default
 * run_h2_est.R
   * An evaluation tool to estimate genetic heritability of simulated traits
   
