@@ -93,7 +93,7 @@ The example command parameters include all that one will need for multi-tissue T
 2) cross-tissue gene-level association, e.g. MulTiXcan ([link to GitHub](https://github.com/hakyimlab/MetaXcan), [link to paper](https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1007889)), UTMOST ([link to GitHub](https://github.com/Joker-Jerome/UTMOST), [link to paper](https://www.nature.com/articles/s41588-019-0345-7))
 
 ## Reference
-The manuscript "Tissue specificity-aware TWAS framework identifies novel associations with metabolic and virologic traits in HIV-positive adults" is under preparation.
+The manuscript "Tissue specificity-aware TWAS framework identifies novel associations with metabolic and virologic traits in HIV-positive adults" is under review.
 
 ## Acknowledgements
 We thank [Dr. Yiming Hu](https://github.com/Joker-Jerome/UTMOST), [Dr. Haky Im, and Alvaro N Barbeira](https://github.com/hakyimlab/MetaXcan) for their technical help and support.  
