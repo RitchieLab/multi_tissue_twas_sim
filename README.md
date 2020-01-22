@@ -80,6 +80,17 @@ The example command parameters include all that one will need for multi-tissue T
 * *--output-prefix* Prefix of output files
 * *--core* Number of cores to run parallel tasks
 * *--random-seed* Random seed number
+* *--simulation* Only generate simulated genotype, gene expression, and phenotype datasets. Do not run eQTL detection and TWAS.
+
+***Please note that the above command line also runs only the simulation part of the algorithm. To run subsequent eQTL detecting methods and TWAS algorithms that are embeded in the script, remove the flag "--simulation".***
+
+## Embedded eQTL Detecting methods
+1) [Elastic Net](https://www.nature.com/articles/ng.3367) as implemented in PrediXcan
+2) [Group LASSO](https://www.nature.com/articles/s41588-019-0345-7) as implemented in UTMOST
+
+## Embedded TWAS Algorithms
+1) single-tissue gene-level association, e.g. PrediXcan ([link to GitHub](https://github.com/hakyimlab/MetaXcan), [link to paper](https://www.nature.com/articles/ng.3367))
+2) cross-tissue gene-level association, e.g. MulTiXcan ([link to GitHub](https://github.com/hakyimlab/MetaXcan), [link to paper](https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1007889)), UTMOST ([link to GitHub](https://github.com/Joker-Jerome/UTMOST), [link to paper](https://www.nature.com/articles/s41588-019-0345-7))
 
 ## Reference
 The manuscript "Tissue specificity-aware TWAS framework identifies novel associations with metabolic and virologic traits in HIV-positive adults" is under preparation.
