@@ -65,21 +65,21 @@ $ Rscript run_twas_simulation.R \
 ```
 
 The example command parameters include all that one will need for multi-tissue TWAS simulation. Each specific parameter means the followings:
-* *--training 500* eQTL discovery dataset sample size (default = 500)
-* *--testing 1000* TWAS sample size (default = 1000)
-* *--snps 60* Number of SNPs in a given gene
-* *--eqtls 30* Number of eQTLs among SNPs in a given gene 
-* *--pct-mt-eqtls 0.8* Percentage of multi-tissue eQTLs among total eQTLs (rounded)
-* *--maf 0.01,0.5* Range of minor allele frequency
-* *--genes 100* Number of genes in a round of simulation
-* *--expr-tis 10* Number of gene expressing tissues
-* *--h2-ge 0.3* Heritability of gene expression levels
-* *--cor-tissues 0.8* Similarities of gene expression levels among tissues, can be a set value like '0' for all tissue pairs, or a range like '-1,1'. In the latter case, Similarities of gene expression levels among tissues will be drawn from a uniform distribution ranging from -1 to 1. 
-* *--r2-et 0.01* Variance of simulated traits explained by gene expression levels
-* *--output-dir ./* Output directory of simulation results
-* *--output-prefix twas_sim* Prefix of output files
-* *--core 10* Number of cores to run parallel tasks
-* *--random-seed 1* Random seed number
+* *--training* eQTL discovery dataset sample size (default = 500)
+* *--testing* TWAS sample size (default = 1000)
+* *--snps* Number of SNPs in a given gene
+* *--eqtls* Number of eQTLs among SNPs in a given gene 
+* *--pct-mt-eqtls* Percentage of multi-tissue eQTLs among total eQTLs (rounded)
+* *--maf* Range of minor allele frequency
+* *--genes* Number of genes in a round of simulation
+* *--expr-tis* Number of gene expressing tissues
+* *--h2-ge* Heritability of gene expression levels
+* *--cor-tissues* Similarities of gene expression levels among tissues, can be a set value like '0' for all tissue pairs, or a range like '-1,1'. In the latter case, Similarities of gene expression levels among tissues will be drawn from a uniform distribution ranging from -1 to 1. 
+* *--r2-et* Variance of simulated traits explained by gene expression levels
+* *--output-dir* Output directory of simulation results
+* *--output-prefix* Prefix of output files
+* *--core* Number of cores to run parallel tasks
+* *--random-seed* Random seed number
 
 ## Reference
 The manuscript "Tissue specificity-aware TWAS framework identifies novel associations with metabolic and virologic traits in HIV-positive adults" is under preparation.
