@@ -46,8 +46,12 @@ $ git clone https://github.com/RitchieLab/multi_tissue_twas_sim
 ```bash
 $ cd multi_tissue_twas_sim/software
 ```
+3) (Optional) compile optim.c. This step is only necessary if you plan to run evaluation of TWAS power and type I erro rates. 
+```bash
+$ R CMD SHLIB optim.c
+```
 
-3) Run the Simulation script, run_twas_simulation.R.
+4) Run the Simulation script, run_twas_simulation.R.
 ```bash
 $ Rscript run_twas_simulation.R \
   --training 500 \
@@ -64,7 +68,8 @@ $ Rscript run_twas_simulation.R \
   --output-dir ./ \
   --output-prefix twas_sim \
   --core 10 \
-  --random-seed 1
+  --random-seed 1 \
+  --simulation
 ```
 
 The example command parameters include all that one will need for multi-tissue TWAS simulation. Each specific parameter means the followings:
