@@ -85,7 +85,7 @@ calculate_maf <- function(dosage_matrix){
 ## 4. simulate_eqtls
 ############################################
 
-simulate_eqtls <- function(snp_list, n_tis = 1, cor_tis = 0){
+simulate_eqtls <- function(snp_list, n_tis = 1, cor_tis = 0, h2 = 1){
   # simulate gene expression data based on provided genotypic data
   stopifnot(n_tis>0)
   
@@ -99,6 +99,7 @@ simulate_eqtls <- function(snp_list, n_tis = 1, cor_tis = 0){
   # simulate weights
   if(n_tis == 1) {
     snp_weights <- as.matrix(rnorm(n_snps, mean = 0, sd = 1))
+    snp_weights <- snp_weights * h2
   }else{
     # simulate weight in multiple genes
     # set sigma matrix
@@ -113,6 +114,7 @@ simulate_eqtls <- function(snp_list, n_tis = 1, cor_tis = 0){
       print("Parameter out of subscription.")
     }
     snp_weights <- rmvnorm(length(snp_list), mean = rep(0, n_tis), sigma = tis_sigma)
+    snp_weights <- snp_weights * h2
   }
   rownames(snp_weights) <- snp_list
   colnames(snp_weights) <- paste0("Tissue", seq(1, n_tis))
@@ -123,15 +125,12 @@ simulate_eqtls <- function(snp_list, n_tis = 1, cor_tis = 0){
 ## 5. simulate_quan_trait
 ############################################
 
-simulate_quan_trait <- function(x, betas, h2){
-  # simulate quantitative trait of x*betas with mean = 0 and var = h2
+simulate_quan_trait <- function(x, betas){
   if(length(betas) == 0){
     quan_trait <- matrix(0, nrow = nrow(x), ncol = ncol(betas))
     return(quan_trait)
   }else{
     quan_trait <- x %*% betas
-    quan_trait <- quan_trait/sd(quan_trait)*sqrt(h2) # for standardized genotypes
-    #quan_trait <- scale(quan_trait)*sqrt(h2) # for non-standardized genotypes
     return(quan_trait)
   }
 }

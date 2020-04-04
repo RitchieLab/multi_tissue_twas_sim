@@ -157,18 +157,17 @@ twas_summary <- foreach(i=1:10, .combine = 'rbind') %dopar% {
   # simulate gene expression files across tissues
   # multi-tissue eQTLs
   snp_list <- grep("mt", snp_info$SNP, value = TRUE)
-  mt_eqtl_weights <- simulate_eqtls(snp_list, n_tissues, cor_tis = cor_tissues)
-  mt_eqtl_signal <- simulate_quan_trait(geno[,snp_list], mt_eqtl_weights, h2_ge*pct_mt_eqtls)
+  mt_eqtl_weights <- simulate_eqtls(snp_list, n_tissues, cor_tis = cor_tissues, h2 = h2_ge*pct_mt_eqtls)
+  mt_eqtl_signal <- simulate_quan_trait(geno[,snp_list], mt_eqtl_weights)
   # single-tissue eQTLs
   snp_list <- grep("st", snp_info$SNP, value = TRUE)
-  st_eqtl_weights <- simulate_eqtls(snp_list, n_tissues)
-  st_eqtl_signal <- simulate_quan_trait(geno[,snp_list], st_eqtl_weights, h2_ge*(1-pct_mt_eqtls))
+  st_eqtl_weights <- simulate_eqtls(snp_list, n_tissues, h2 = h2_ge*(1-pct_mt_eqtls))
+  st_eqtl_signal <- simulate_quan_trait(geno[,snp_list], st_eqtl_weights)
   # signal
   expr_signal <- mt_eqtl_signal + st_eqtl_signal
   colnames(expr_signal) <- tissue_names
   # noise
-  expr_error <- simulate_eqtls(rownames(geno), n_tissues, cor_tissues) # simulate a N*T expression matrix following N(0, Sigma)
-  expr_error <- expr_error/sd(expr_error)*sqrt(1-h2_ge) 
+  expr_error <- simulate_eqtls(rownames(geno), n_tissues, cor_tissues, h2 = 1-h2_ge) # simulate a N*T expression matrix following N(0, Sigma)
   # gene expression matrix
   expr <- expr_signal + expr_error
   colnames(expr) <- tissue_names
