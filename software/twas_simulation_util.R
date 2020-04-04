@@ -114,7 +114,7 @@ simulate_eqtls <- function(snp_list, n_tis = 1, cor_tis = 0, h2 = 1){
       print("Parameter out of subscription.")
     }
     snp_weights <- rmvnorm(length(snp_list), mean = rep(0, n_tis), sigma = tis_sigma)
-    snp_weights <- snp_weights * h2
+    snp_weights <- snp_weights * sqrt(h2)
   }
   rownames(snp_weights) <- snp_list
   colnames(snp_weights) <- paste0("Tissue", seq(1, n_tis))
