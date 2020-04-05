@@ -50,10 +50,10 @@ opt_list <- list(
   make_option("--maf", type="character", default="0.01,0.5", help="Range of minor allele frequency (default = %default)"),
   make_option("--pct-mt-eqtls", type="numeric", default=0.8, help="Percentage of multi-tissue eQTLs among total eQTLs (default = %default)"),
   make_option("--genes", type="integer", default=100, help="Number of genes in a round of simulation (default = %default)"),
-  make_option("--expr-tis", type="integer", default=1, help="Number of gene expressing tissues (default = %default)"),
+  make_option("--expr-tis", type="integer", default=5, help="Number of gene expressing tissues (default = %default)"),
   make_option("--total-tis", type="integer", default=10, help="Number of total tissues (default = %default)"),
   make_option("--h2-ge", type="numeric", default=0.3, help="Heritability of gene expression levels, (default = %default)"),
-  make_option("--cor-tissues", type="character", default="0", help="Correlation of gene expression levels among tissues, like '0' or '-1,1' (default = %default)"),
+  make_option("--cor-tissues", type="character", default="0.6", help="Correlation of gene expression levels among tissues, like '0' or '-1,1' (default = %default)"),
   make_option("--r2-et", type="numeric", default=0.01, help="Variance of simulated traits explained by gene expression levels, (default = %default)"),
   make_option("--output-dir", type="character", action="store", default=paste0(getwd(), "/simulated_data/"), help="Output directory of simulation results"),
   make_option("--output-prefix", type="character", action="store", default="twas_sim", help="Prefix of each output file"),
@@ -153,28 +153,28 @@ twas_summary <- foreach(i=1:10, .combine = 'rbind') %dopar% {
   colnames(geno) <- snp_info$SNP
   ## standardize genotypes
   geno <- scale(geno)/sqrt(ncol(geno))
- 
+  
   # simulate gene expression files across tissues
   # multi-tissue eQTLs
   snp_list <- grep("mt", snp_info$SNP, value = TRUE)
-  mt_eqtl_weights <- simulate_eqtls(snp_list, n_tissues, cor_tis = cor_tissues, h2 = h2_ge*pct_mt_eqtls)
-  mt_eqtl_signal <- simulate_quan_trait(geno[,snp_list], mt_eqtl_weights)
+  mt_eqtl_weights <- simulate_eqtls(snp_list, n_tissues, cor_tis = cor_tissues)
+  mt_eqtl_signal <- simulate_quan_trait(geno[,snp_list], mt_eqtl_weights, h2_ge*pct_mt_eqtls)
   # single-tissue eQTLs
   snp_list <- grep("st", snp_info$SNP, value = TRUE)
-  st_eqtl_weights <- simulate_eqtls(snp_list, n_tissues, h2 = h2_ge*(1-pct_mt_eqtls))
-  st_eqtl_signal <- simulate_quan_trait(geno[,snp_list], st_eqtl_weights)
+  st_eqtl_weights <- simulate_eqtls(snp_list, n_tissues)
+  st_eqtl_signal <- simulate_quan_trait(geno[,snp_list], st_eqtl_weights, h2_ge*(1-pct_mt_eqtls))
   # signal
   expr_signal <- mt_eqtl_signal + st_eqtl_signal
   colnames(expr_signal) <- tissue_names
   # noise
-  expr_error <- simulate_eqtls(rownames(geno), n_tissues, cor_tissues, h2 = 1-h2_ge) # simulate a N*T expression matrix following N(0, Sigma)
+  expr_error <- simulate_eqtls(rownames(geno), n_tissues, cor_tissues) # simulate a N*T expression matrix following N(0, Sigma)
+  expr_error <- apply(expr_error, 2, function(x){x/sd(x)*sqrt(1-h2_ge)})
   # gene expression matrix
   expr <- expr_signal + expr_error
   colnames(expr) <- tissue_names
 
   # simulate phenptypic traits from test dataset
   # for simplicity, assuming a gene is related and only related to a trait in one tissue
-  ## simulate signal according to Sudha's summary statistics based TWAS
   trait_signal <- expr_signal[, causal_tis]/sd(expr_signal[, causal_tis]) * sqrt(r2_et)
  
   trait_error <- rnorm(n_train + n_test)
