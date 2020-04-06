@@ -130,8 +130,7 @@ simulate_quan_trait <- function(x, betas, h2){
     return(quan_trait)
   }else{
     quan_trait <- x %*% betas
-    #quan_trait <- quan_trait/sd(quan_trait)*sqrt(h2) # for standardized genotypes
-    quan_trait <- apply(quan_trait, 2, function(x){x/sd(x)*sqrt(h2)})
+    quan_trait <- apply(quan_trait, 2, function(x){x/sd(x)*sqrt(h2)})# for standardized genotypes
     #quan_trait <- scale(quan_trait)*sqrt(h2) # for non-standardized genotypes
     return(quan_trait)
   }
