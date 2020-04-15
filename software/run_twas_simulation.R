@@ -59,7 +59,7 @@ opt_list <- list(
   make_option("--output-prefix", type="character", action="store", default="twas_sim", help="Prefix of each output file"),
   make_option("--core", type="numeric", default=1, help="Number of cores to run parallel tasks (default = %default)"),
   make_option("--random-seed", type="numeric", default=1, help="Random seed number (default = %default)"),
-  make_option("--simulation", action="store_true", default=FALSE, help="Only generate simulated genotype, gene expression, and phenotype datasets. Do not run eQTL detection and TWAS. (default = %default)")
+  make_option("--simulation", action="store_true", default=FALSE, help="A flag to tell the algorithm ONLY generate simulated genotype, gene expression, and phenotype datasets. Do not run eQTL detection and TWAS. (default = %default)")
 )
 opts <- parse_args(OptionParser(option_list=opt_list))
 # parse values
@@ -125,7 +125,7 @@ dir.create(pheno_dir, recursive = TRUE, showWarnings = TRUE)
 assoc_dir <- "twas_assoc/"
 dir.create(assoc_dir, recursive = TRUE, showWarnings = TRUE)
 
-# remove gene specificity annotation files if it exists from previous simulation
+# will remove gene specificity annotation files if it exists from previous simulation
 file.remove(paste0(expr_dir, output_prefix, "gene_info.txt"))
 
 # record starting time & system setups
@@ -139,9 +139,8 @@ twas_summary_glasso <- data.frame()
 gene_tsi <- data.frame()
 
 # parallel run n_genes permutations  
-#twas_summary <- foreach(i=1:n_genes, .combine = 'rbind') %dopar% {
-twas_summary <- foreach(i=1:10, .combine = 'rbind') %dopar% {
-  
+twas_summary <- foreach(i=1:n_genes, .combine = 'rbind') %dopar% {
+
   ### 2.1.2. Genotypic data
   # simulate SNP info file
   snp_info <- simulate_geno(n_snps, n_eqtls, n_mt_eqtls, min_maf = maf_range[1], max_maf = maf_range[2])
@@ -153,7 +152,7 @@ twas_summary <- foreach(i=1:10, .combine = 'rbind') %dopar% {
   colnames(geno) <- snp_info$SNP
   ## standardize genotypes
   geno <- scale(geno)/sqrt(ncol(geno))
-  
+
   # simulate gene expression files across tissues
   # multi-tissue eQTLs
   snp_list <- grep("mt", snp_info$SNP, value = TRUE)

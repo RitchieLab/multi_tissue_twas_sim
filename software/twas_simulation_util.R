@@ -240,7 +240,7 @@ minmax_lambda <- function(lst){
 ############################################
 
 glasso <- function(X, Y, X1, Y1, XX, XY, Xnorm, lambda1, lambda2, theta, stepsize = 1e-4, maxiter = 50, eps = 1e-3){
-  ## adapted from CTIMP (https://github.com/yiminghu/CTIMP), copyright belongs to Dr. Yuming Hu
+  ## adapted from CTIMP (https://github.com/yiminghu/CTIMP), great thanks to Dr. Yuming Hu
   
   M <- nrow(XY) # number of SNPs
   P <- ncol(Y) # number of tissues
@@ -288,7 +288,7 @@ glasso <- function(X, Y, X1, Y1, XX, XY, Xnorm, lambda1, lambda2, theta, stepsiz
 ############################################
 
 glasso_no_early_stopping <- function(X, Y, XX, XY, Xnorm, lambda1, lambda2, theta, stepsize = 1e-4, maxiter = 50, eps = 1e-3){
-  ## adapted from CTIMP (https://github.com/yiminghu/CTIMP), copyright belongs to Dr. Yuming Hu
+  ## adapted from CTIMP (https://github.com/yiminghu/CTIMP), great thanks to Dr. Yuming Hu
   
   M <- nrow(XY) # number of SNPs
   P <- ncol(Y) # number of tissues
